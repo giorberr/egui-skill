@@ -2,8 +2,10 @@
 
 Baseline: **egui/eframe/epaint 0.36.2**, checked against installed crate sources on
 2026-10-14. This verifies API declarations and documented behavior, not compiled
-examples or a rendered application. Recheck the target application's lockfile;
-prefer its existing wrappers and helpers when they already solve the task.
+examples or a rendered application. **0.37 has API differences**, including the
+ID migration below. The target application's lockfile and actual dependency
+source are authoritative, not this baseline. Prefer its existing wrappers and
+helpers when they already solve the task.
 
 ## Choose an API
 
@@ -46,8 +48,31 @@ Contract: [eframe App 0.36.2](https://docs.rs/eframe/0.36.2/eframe/trait.App.htm
 
 Use persistent entity keys for repeated widgets, not list position or changing
 labels. `ui.push_id(...)` scopes auto IDs and `ui.make_persistent_id(...)`; it
-does not scope an explicit `Id::new(...)` supplied to `ui.interact`. Include the
-entity and control role in an explicit composite ID when needed.
+does not scope an explicit `Id::new(...)` (0.36.2) or `Id::unique(...)` (0.37)
+supplied to `ui.interact`. Include the entity and control role in an explicit
+composite ID when needed.
+
+### egui 0.37 ID migration
+
+In egui 0.37, `Id::new` is deprecated. Use `Id::unique(source)` for
+application-wide identities, or local salts (`IdSalt::new(...)`) through the
+appropriate widget/UI APIs, such as `TextEdit::id_salt(...)`, `ui.push_id(...)`,
+and `ui.make_persistent_id(...)`. In **0.37.0**, `Id::new` delegates directly to
+`Id::unique`, so replacing it with the same source preserves identity within
+that version. Do not automatically convert existing global IDs into locally
+scoped IDs: focus requests, memory lookups, and widget IDs must remain
+consistent. For custom text inputs and programmatic focus, use the same ID at
+every call site (including `TextEdit::id(...)`) and run existing text/IME and
+focus interaction tests after migration.
+
+Verified against the 0.37.0 sources on 2026-10-20:
+[`Id::unique` and deprecated `Id::new`](https://docs.rs/egui/0.37.0/src/egui/id.rs.html#74-104),
+[UI identity/scoping APIs](https://docs.rs/egui/0.37.0/src/egui/ui.rs.html), and
+[`TextEdit` identity APIs](https://docs.rs/egui/0.37.0/src/egui/widgets/text_edit/builder.rs.html#174-191).
+This confirms API declarations and implementation, not runtime input behavior
+or visual correctness.
+
+### Input and focus
 
 `Sense::click()` is focusable. `response.clicked()` includes pointer activation,
 accessibility activation, and Space/Enter while focused. `clicked_by(...)` omits
@@ -122,8 +147,9 @@ job cadence independent of rendering.
 
 ## Common version mistakes
 
-These are checked replacements for the 0.36.2 baseline, not a migration history
-or a reason to upgrade another application.
+The following table contains checked replacements for the 0.36.2 baseline,
+not a migration history or a reason to upgrade another application. For the
+0.37 ID change, see the version-specific migration above.
 
 | Older example | 0.36.2 form |
 | --- | --- |
@@ -141,7 +167,7 @@ Find the locked crates under `$CARGO_HOME/registry/src/*/`, normally
 `~/.cargo/registry/src/*/`. Relevant sources:
 
 - `eframe/src/epi.rs`: application callbacks and persistence.
-- `egui/src/{ui.rs,context.rs,response.rs,sense.rs,data/output.rs}`: layout,
+- `egui/src/{id.rs,ui.rs,context.rs,response.rs,sense.rs,data/output.rs}`: layout,
   identity, input, accessibility, repaints, and animation.
 - `egui/src/containers/{panel.rs,window.rs,area.rs,modal.rs,scroll_area.rs,frame.rs}`
   and `egui/src/widgets/text_edit/builder.rs`: containers and versioned signatures.

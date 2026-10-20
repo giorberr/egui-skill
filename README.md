@@ -8,7 +8,8 @@ repainting, window lifecycle, and visual design.
 - [API guide](skills/egui/api-guide.md): task-oriented API reference and version pitfalls.
 - [Design guide](skills/egui/design-guide.md): layout, interaction, motion, and visual review.
 
-The skill lives in `skills/egui/` and is named `egui`. Its API reference was
-checked against version **0.36.2**; always verify the target application's locked
-version before using an API. Design defaults are recommendations, not a required
-theme or architecture.
+The skill lives in `skills/egui/` and is named `egui`. Its API reference retains
+**0.36.2** as the baseline, with a source-verified **0.37.0 ID migration** note.
+The target application's lockfile and actual dependency source take precedence
+over that baseline. Design defaults are recommendations, not a required theme or
+architecture.
